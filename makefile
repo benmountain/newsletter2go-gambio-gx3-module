@@ -1,5 +1,5 @@
 version = 0_0_00
-outfile = Gambio_nl2go_$(version).zip
+outfile = GambioGX3_nl2go_$(version).zip
 
 $(version): $(outfile)
 
