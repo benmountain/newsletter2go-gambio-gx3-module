@@ -12,7 +12,7 @@ AdminMenuControl::connect_with_page('admin.php?do=ModuleCenter');
 defined('GM_HTTP_SERVER') or define('GM_HTTP_SERVER', HTTP_SERVER);
 define('PAGE_URL', GM_HTTP_SERVER . DIR_WS_ADMIN . basename(__FILE__));
 const N2GO_INTEGRATION_URL = 'https://ui.newsletter2go.com/integrations/connect/GAM/';
-$PLUGIN_VERSION = '4.0.00';
+$PLUGIN_VERSION = '4.0.02';
 
 function replaceTextPlaceholders($content)
 {
