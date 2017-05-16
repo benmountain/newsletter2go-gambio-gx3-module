@@ -460,7 +460,7 @@ class N2GoApi
         $productResult = xtc_db_query($query);
         $product = xtc_db_fetch_array($productResult);
 
-        if ($product['id'] == $id || $product['ean'] == $id) {
+        if ($product['id'] == $id || $product['model'] == $id) {
 
             $id = $product['id'];
 
@@ -471,16 +471,28 @@ class N2GoApi
 
             $product['oldPrice'] = $product['newPrice'] = round($product['oldPrice'], 2);
             $product['oldPriceNet'] = $product['newPriceNet'] = round($product['oldPriceNet'], 2);
-            $product['url'] = xtc_href_link('', '', 'NONSSL', false) . '/';
+            $product['url'] = rtrim(xtc_href_link('', '', 'NONSSL', false), '/') . '/';
             $product['link'] = FILENAME_PRODUCT_INFO . '?products_id=' . $id;
 
-            $product['images'] = ($product['images'] ? array($product['url'] . DIR_WS_ORIGINAL_IMAGES . $product['images']) : array());
+            $imageUrl = $product['url'] . DIR_WS_INFO_IMAGES . $product['images'];
+            if (file_exists(DIR_WS_ORIGINAL_IMAGES . $product['images'])) {
+                $imageUrl = $product['url'] . DIR_WS_ORIGINAL_IMAGES . $product['images'];
+            }
+
+            $product['images'] = ($product['images'] ? array($imageUrl) : array());
             $query = 'SELECT image_name FROM ' . TABLE_PRODUCTS_IMAGES . ' WHERE products_id = ' . $id;
             $imagesQuery = xtc_db_query($query);
             $n = xtc_db_num_rows($imagesQuery);
             for ($i = 0; $i < $n; $i++) {
                 $image = xtc_db_fetch_array($imagesQuery);
-                $product['images'][] = $product['url'] . DIR_WS_ORIGINAL_IMAGES . $image['image_name'];
+
+                $imageUrl = $product['url'] . DIR_WS_INFO_IMAGES . $image['image_name'];
+
+                if (file_exists(DIR_WS_ORIGINAL_IMAGES . $image['image_name'])) {
+                    $imageUrl = $product['url'] . DIR_WS_ORIGINAL_IMAGES . $image['image_name'];
+                }
+
+                $product['images'][] = $imageUrl;
             }
             $this->output['product'] = $product;
 
