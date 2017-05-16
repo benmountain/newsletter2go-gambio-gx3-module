@@ -1,5 +1,5 @@
 <?php
-// VERSION 4000 line:90
+// VERSION 4003 line:90
 
 if (isset($SESSION) && $_SESSION['customers_status']['customers_status_id'] == '0') {
     define('SUPPRESS_REDIRECT', true);
@@ -12,7 +12,7 @@ AdminMenuControl::connect_with_page('admin.php?do=ModuleCenter');
 defined('GM_HTTP_SERVER') or define('GM_HTTP_SERVER', HTTP_SERVER);
 define('PAGE_URL', GM_HTTP_SERVER . DIR_WS_ADMIN . basename(__FILE__));
 const N2GO_INTEGRATION_URL = 'https://ui.newsletter2go.com/integrations/connect/GAM/';
-$PLUGIN_VERSION = '4.1.00';
+$PLUGIN_VERSION = '4.0.03';
 
 function replaceTextPlaceholders($content)
 {
