@@ -1,5 +1,5 @@
 <?php
-// VERSION 4003 line:15
+// VERSION 4005 line:15
 
 if (isset($SESSION) && $_SESSION['customers_status']['customers_status_id'] == '0') {
     define('SUPPRESS_REDIRECT', true);
