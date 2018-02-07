@@ -58,50 +58,54 @@ class N2GoApi
                 $this->getParams = $getParams;
                 $this->postParams = $postParams;
                 $this->output = array('success' => true, 'message' => 'OK',);
-                $this->checkCredentials();
+                if (isset($postParams['company_id'])) {
+                    $this->callback($postParams['company_id']);
+                } else {
+                    $this->checkCredentials();
 
-                if ($this->output['success']) {
-                    switch ($action) {
-                        case 'testConnection':
-                            // do nothing
-                            break;
-                        case 'getPluginVersion':
-                            $this->getPluginVersion();
-                            break;
-                        case 'getLanguages':
-                            $this->getLanguages();
-                            break;
-                        case 'getCustomers':
-                            $this->getCustomers();
-                            break;
-                        case 'getCustomerFields':
-                            $this->output['fields'] = $this->getCustomerFields();
-                            break;
-                        case 'getCustomerGroups':
-                            $this->getCustomerGroups();
-                            break;
-                        case 'getCustomerCount':
-                            $this->getCustomerCount();
-                            break;
-                        case 'changeMailStatus':
-                            $this->changeMailStatus();
-                            break;
-                        case 'bounce':
-                            $this->bounce();
-                            break;
-                        case 'getProduct':
-                            $this->getProduct();
-                            break;
-                        case 'getProductFields':
-                            $this->output['fields'] = $this->getProductFields();
-                            break;
-                        default:
-                            $this->failure('Error: Bad Request - wrong action parameter!');
-                            break;
+                    if ($this->output['success']) {
+                        switch ($action) {
+                            case 'testConnection':
+                                // do nothing
+                                break;
+                            case 'getPluginVersion':
+                                $this->getPluginVersion();
+                                break;
+                            case 'getLanguages':
+                                $this->getLanguages();
+                                break;
+                            case 'getCustomers':
+                                $this->getCustomers();
+                                break;
+                            case 'getCustomerFields':
+                                $this->output['fields'] = $this->getCustomerFields();
+                                break;
+                            case 'getCustomerGroups':
+                                $this->getCustomerGroups();
+                                break;
+                            case 'getCustomerCount':
+                                $this->getCustomerCount();
+                                break;
+                            case 'changeMailStatus':
+                                $this->changeMailStatus();
+                                break;
+                            case 'bounce':
+                                $this->bounce();
+                                break;
+                            case 'getProduct':
+                                $this->getProduct();
+                                break;
+                            case 'getProductFields':
+                                $this->output['fields'] = $this->getProductFields();
+                                break;
+                            default:
+                                $this->failure('Error: Bad Request - wrong action parameter!');
+                                break;
+                        }
+                    } else {
+                        $this->failure('Error: Bad Request - missing action parameter!');
                     }
                 }
-            } else {
-                $this->failure('Error: Bad Request - missing action parameter!');
             }
         } catch (Exception $e) {
             $this->failure($e->getMessage());
@@ -344,7 +348,7 @@ class N2GoApi
                 $query2 = 'SELECT COUNT(*) AS total 
                            FROM ' . TABLE_NEWSLETTER_RECIPIENTS . ' nr 
                            WHERE nr.customers_status = 1 AND nr.customers_id = 0';
-                
+
                 $countQuery = xtc_db_query($query2);
                 $result = xtc_db_fetch_array($countQuery);
                 $total += $result['total'];
@@ -699,12 +703,28 @@ class N2GoApi
         $this->output['message'] = $msg;
         $this->output['errorcode'] = $code;
     }
+
+    public static function callback($companyId)
+    {
+        $query = "SELECT `configuration_value` FROM `" . TABLE_CONFIGURATION . "` WHERE `configuration_key` = 'NEWSLETTER2GO_COMPANYID';";
+        $id = xtc_db_fetch_array(xtc_db_query($query));
+        $id = $id['configuration_value'];
+
+        if (empty($id)) {
+            $query = "INSERT INTO `" . TABLE_CONFIGURATION . "` (`configuration_key`, `configuration_value`) VALUES ('NEWSLETTER2GO_COMPANYID', '$companyId');";
+        } else {
+            $query = "UPDATE `" . TABLE_CONFIGURATION . "` SET `configuration_value` = '$companyId' WHERE `configuration_key` = 'NEWSLETTER2GO_COMPANYID'";
+        }
+
+        xtc_db_query($query);
+    }
 }
 
 
 $username = isset($_SERVER['PHP_AUTH_USER']) ? $_SERVER['PHP_AUTH_USER'] : '';
 $apikey = isset($_SERVER['PHP_AUTH_PW']) ? $_SERVER['PHP_AUTH_PW'] : '';
 $action = isset($_POST['action']) ? $_POST['action'] : '';
+$companyId = isset($_POST['company_id']) ? $_POST['company_id'] : '';
 
 if (!$username && isset($_POST['username'])) {
     $username = $_POST['username'];
@@ -717,7 +737,13 @@ if (!$apikey && isset($_POST['apikey'])) {
 header('Content-Type: application/json');
 
 if (!xtc_not_null($username) || !xtc_not_null($apikey)) {
-    echo json_encode(array('success' => false, 'message' => 'Error: Credentials are missing!', 'errorcode' => N2GoApi::ERRNO_PLUGIN_CREDENTIALS_MISSING));
+    if(!empty($companyId)) {
+        N2GoApi::callback($companyId);
+        echo json_encode(array('success' => true, 'message' => 'OK',));
+    } else {
+        echo json_encode(array('success' => false, 'message' => 'Error: Credentials are missing!', 'errorcode' => N2GoApi::ERRNO_PLUGIN_CREDENTIALS_MISSING));
+    }
+
     exit;
 }
 

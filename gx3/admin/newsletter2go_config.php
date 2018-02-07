@@ -71,11 +71,20 @@ if ($queryParams['version'] == null) {
 if (!empty($_POST['n2g_username']) && !empty($_POST['n2g_apikey'])) {
     $inputUser = xtc_db_input($_POST['n2g_username']);
     $inputKey = xtc_db_input($_POST['n2g_apikey']);
+    $inputTracking = xtc_db_input($_POST['n2g_tracking']);
 
     if (empty($username)) {
         $query = "INSERT INTO `" . TABLE_CONFIGURATION . "` (`configuration_key`, `configuration_value`)
 
-                  VALUES ('NEWSLETTER2GO_USERNAME', '$inputUser'), ('NEWSLETTER2GO_APIKEY', '$inputKey'), ('NEWSLETTER2GO_VERSION', '4003')";
+                  VALUES ('NEWSLETTER2GO_USERNAME', '$inputUser'), 
+                         ('NEWSLETTER2GO_APIKEY', '$inputKey'), 
+                         ('NEWSLETTER2GO_VERSION', '4003'),";
+
+
+        $query .= "('NEWSLETTER2GO_TRACKING',";
+        $query .= isset($_POST['n2g_tracking']) ? "TRUE" : "FALSE";
+        $query .= ");";
+
 
         xtc_db_query($query);
         $username = $inputUser;
@@ -108,13 +117,21 @@ if (empty($username)) {
     $apikey = xtc_db_fetch_array(xtc_db_query($query));
     $apikey = $apikey['configuration_value'];
 
+    $query = "SELECT `configuration_value` FROM `" . TABLE_CONFIGURATION . "` WHERE `configuration_key` = 'NEWSLETTER2GO_TRACKING'";
+    $tracking = xtc_db_fetch_array(xtc_db_query($query));
+    $tracking = $tracking['configuration_value'] ? true : false;
+
     $queryParams['username'] = $username;
     $queryParams['apikey'] = $apikey;
+    $queryParams['tracking'] = $tracking;
     $queryParams['language'] = getDefaultLanguage();
     $queryParams['url'] = HTTP_SERVER . DIR_WS_CATALOG;
+    $queryParams['callback'] = $queryParams['url'] . '/newsletter2go.php';
 
     $connectUrl = N2GO_INTEGRATION_URL . '?' . http_build_query($queryParams);
 }
+
+
 
 ob_start();
 ?>
@@ -124,7 +141,8 @@ ob_start();
         <meta http-equiv="x-ua-compatible" content="IE=edge">
         <meta http-equiv="Content-Type" content="text/html; charset=<?php echo $_SESSION['language_charset']; ?>">
         <title><?php echo TITLE; ?></title>
-        <link rel="stylesheet" type="text/css" href="<?php echo DIR_WS_ADMIN; ?>html/assets/styles/legacy/stylesheet.css">
+        <link rel="stylesheet" type="text/css"
+              href="<?php echo DIR_WS_ADMIN; ?>html/assets/styles/legacy/stylesheet.css">
         <style>
             td.boxCenter {
                 font: 0.8em sans-serif;
@@ -247,8 +265,8 @@ ob_start();
                         <dt><label for="n2g_username">##username</label>
                         </dt>
                         <dd>
-                            <input id="n2g_username" name="n2g_username" type="text" value="<?php echo $username ?>"
-                                   required>
+                            <input id="n2g_username" name="n2g_username" type="text" value=<?php echo $username ?>
+                            required>
                         </dd>
                         <dt><label for="n2g_apikey">##apikey</label></dt>
                         <dd>
@@ -256,6 +274,11 @@ ob_start();
                             <button id="generate" type="button" name="n2g_generate" onclick="generateKey()">Generate
                                 key
                             </button>
+                        </dd>
+                        <dt><label for="n2g_tracking">##conversion tracking</label>
+                        </dt>
+                        <dd>
+                            <input id="n2g_tracking" name="n2g_tracking" type="checkbox" <?php if($tracking) { ?> checked <?php } ?> required>
                         </dd>
                         <dt><label for="n2g_version">##version</label>
                         </dt>
@@ -274,7 +297,7 @@ ob_start();
         </tr>
     </table>
     <?php
-        require(DIR_WS_INCLUDES . 'footer.php');
+    require(DIR_WS_INCLUDES . 'footer.php');
     ?>
     </body>
     </html>
