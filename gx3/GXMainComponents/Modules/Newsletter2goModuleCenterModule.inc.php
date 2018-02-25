@@ -47,5 +47,6 @@ class Newsletter2goModuleCenterModule extends AbstractModuleCenterModule
         $this->db->where_in('configuration_key', 'NEWSLETTER2GO_USERNAME')->delete(TABLE_CONFIGURATION);
         $this->db->where_in('configuration_key', 'NEWSLETTER2GO_APIKEY')->delete(TABLE_CONFIGURATION);
         $this->db->where_in('configuration_key', 'NEWSLETTER2GO_VERSION')->delete(TABLE_CONFIGURATION);
+        $this->db->where_in('configuration_key', 'NEWSLETTER2GO_TRACKING')->delete(TABLE_CONFIGURATION);
     }
 }

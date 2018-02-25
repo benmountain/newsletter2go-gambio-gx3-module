@@ -12,7 +12,7 @@ AdminMenuControl::connect_with_page('admin.php?do=ModuleCenter');
 defined('GM_HTTP_SERVER') or define('GM_HTTP_SERVER', HTTP_SERVER);
 define('PAGE_URL', GM_HTTP_SERVER . DIR_WS_ADMIN . basename(__FILE__));
 const N2GO_INTEGRATION_URL = 'https://ui.newsletter2go.com/integrations/connect/GAM/';
-$PLUGIN_VERSION = '4.0.05';
+$PLUGIN_VERSION = '4.1.00';
 
 function replaceTextPlaceholders($content)
 {
@@ -71,20 +71,14 @@ if ($queryParams['version'] == null) {
 if (!empty($_POST['n2g_username']) && !empty($_POST['n2g_apikey'])) {
     $inputUser = xtc_db_input($_POST['n2g_username']);
     $inputKey = xtc_db_input($_POST['n2g_apikey']);
-    $inputTracking = xtc_db_input($_POST['n2g_tracking']);
 
+    $versionDb = str_replace('.', '', $version);
     if (empty($username)) {
         $query = "INSERT INTO `" . TABLE_CONFIGURATION . "` (`configuration_key`, `configuration_value`)
 
                   VALUES ('NEWSLETTER2GO_USERNAME', '$inputUser'), 
                          ('NEWSLETTER2GO_APIKEY', '$inputKey'), 
-                         ('NEWSLETTER2GO_VERSION', '4003'),";
-
-
-        $query .= "('NEWSLETTER2GO_TRACKING',";
-        $query .= isset($_POST['n2g_tracking']) ? "TRUE" : "FALSE";
-        $query .= ");";
-
+                         ('NEWSLETTER2GO_VERSION', '$versionDb');";
 
         xtc_db_query($query);
         $username = $inputUser;
@@ -105,6 +99,12 @@ if (!empty($_POST['n2g_username']) && !empty($_POST['n2g_apikey'])) {
             $query = "UPDATE `" . TABLE_CONFIGURATION . "` SET `configuration_value` = '$inputKey' WHERE `configuration_key` = 'NEWSLETTER2GO_APIKEY'";
             xtc_db_query($query);
         }
+
+        $inputTracking = isset($_POST['n2g_tracking']) ? "TRUE" : "FALSE";
+        $query = "INSERT INTO `" . TABLE_CONFIGURATION . "` (`configuration_key`, `configuration_value`)
+         VALUES ('NEWSLETTER2GO_TRACKING', '{$inputTracking}') 
+         ON DUPLICATE KEY UPDATE `configuration_value` = '$inputTracking'";
+        xtc_db_query($query);
     }
 }
 
@@ -119,19 +119,16 @@ if (empty($username)) {
 
     $query = "SELECT `configuration_value` FROM `" . TABLE_CONFIGURATION . "` WHERE `configuration_key` = 'NEWSLETTER2GO_TRACKING'";
     $tracking = xtc_db_fetch_array(xtc_db_query($query));
-    $tracking = $tracking['configuration_value'] ? true : false;
+    $tracking = $tracking['configuration_value'] === 'TRUE' ? true : false;
 
     $queryParams['username'] = $username;
     $queryParams['apikey'] = $apikey;
-    $queryParams['tracking'] = $tracking;
     $queryParams['language'] = getDefaultLanguage();
     $queryParams['url'] = HTTP_SERVER . DIR_WS_CATALOG;
-    $queryParams['callback'] = $queryParams['url'] . '/newsletter2go.php';
+    $queryParams['callback'] = rtrim($queryParams['url'], '/') . '/newsletter2go.php';
 
     $connectUrl = N2GO_INTEGRATION_URL . '?' . http_build_query($queryParams);
 }
-
-
 
 ob_start();
 ?>
@@ -278,7 +275,7 @@ ob_start();
                         <dt><label for="n2g_tracking">##conversion tracking</label>
                         </dt>
                         <dd>
-                            <input id="n2g_tracking" name="n2g_tracking" type="checkbox" <?php if($tracking) { ?> checked <?php } ?> required>
+                            <input id="n2g_tracking" name="n2g_tracking" type="checkbox" <?php if($tracking) { ?> checked <?php } ?>>
                         </dd>
                         <dt><label for="n2g_version">##version</label>
                         </dt>
